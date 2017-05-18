@@ -5,9 +5,12 @@ MAINTAINER Dimitri Kopriwa <dimitri.kopriwa@kopaxgroup.com>
 ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 7.10.0
 ENV SONAR_SCANNER_VERSION 2.8
+ENV DOCKER_VERSION 1.13.1-0~debian-jessie
+ENV DOCKER_COMPOSE_VERSION 1.13.0
 
 RUN apt-get update
 RUN apt-get install -y curl git tmux htop maven
+
 
 # 1) Install node js
 
@@ -56,7 +59,7 @@ RUN set -ex \
   && mv yarn.js /usr/local/bin/yarn \
   && chmod +x /usr/local/bin/yarn
 
-# 1) Install sonnarjs
+# 2) Install sonnarjs
 
 RUN apt-get update && apt-get install -y unzip
 
@@ -67,3 +70,25 @@ RUN wget -O /tmp/sonar-scanner-${SONAR_SCANNER_VERSION}.zip "https://sonarsource
     && unzip /tmp/sonar-scanner-${SONAR_SCANNER_VERSION}.zip -d /etc/lib/ \
     && rm /tmp/sonar-scanner-${SONAR_SCANNER_VERSION}.zip \
     && ln -s /etc/lib/sonar-scanner-${SONAR_SCANNER_VERSION}/bin/sonar-scanner /usr/local/bin/sonar-scanner
+
+# 3) Install docker
+
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - \
+	&& echo "deb https://apt.dockerproject.org/repo debian-jessie main" > /etc/apt/sources.list.d/docker.list
+
+RUN apt-get install -y \
+	apt-transport-https \
+	ca-certificates \
+	curl \
+	gnupg2 \
+	software-properties-common
+
+RUN apt-get update \
+	&& apt-get install -y --force-yes \
+	docker-engine=${DOCKER_VERSION}
+
+RUN curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose \
+	&& chmod +x /usr/local/bin/docker-compose
+
+RUN apt-get autoclean && rm -rf /var/lib/apt/lists/* \
+  	&& rm -rf /usr/share/locale/* && rm -rf /usr/share/man/* && rm -rf /usr/share/doc/*
